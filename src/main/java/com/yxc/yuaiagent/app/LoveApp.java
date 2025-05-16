@@ -1,7 +1,8 @@
 package com.yxc.yuaiagent.app;
 
 import com.yxc.yuaiagent.advisor.MyLoggerAdvisor;
-import com.yxc.yuaiagent.chatmemory.FileBasedChatMemory;
+import com.yxc.yuaiagent.rag.LoveAppRagCustomAdvisorFactory;
+import com.yxc.yuaiagent.rag.QueryRewriter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -11,6 +12,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -37,6 +39,9 @@ public class LoveApp {
     @Resource
     private Advisor loveAppRagCloudAdvisor;
 
+    @Resource
+    private QueryRewriter QueryRewriter;
+
     private ChatClient chatClient;
 
     private static final String SYSTEM_PROMPT = "你是一个温暖专业的AI恋爱导师，用以下方式帮助用户：  \n" +
@@ -61,17 +66,19 @@ public class LoveApp {
             "- 敏感词触发安全提醒（如\"控制\"\"威胁\"等）  \n" +
             "\n" +
             "这个版本更适合快速部署，需要再精简或补充某部分吗？";
+    @Autowired
+    private QueryRewriter queryRewriter;
 
-    public LoveApp(ChatModel dashscopeChatModel) {
+    public LoveApp(ChatModel dashscopeChatModel, ChatMemory mysqlChatMemory) {
         //基于内存的对话存储
         //ChatMemory chatMemory = new InMemoryChatMemory();
         //基于文件的对话存储
-        ChatMemory chatMemory = new FileBasedChatMemory(System.getProperty("user.dir") + "/chatmemory");
-
+        //ChatMemory chatMemory = new FileChatMemory(System.getProperty("user.dir") + "/chatmemory");
+        //基于Mysql的对话存储
         chatClient = ChatClient.builder(dashscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
-                        new MessageChatMemoryAdvisor(chatMemory)
+                        new MessageChatMemoryAdvisor(mysqlChatMemory)
                 )
                 .build();
     }
@@ -101,6 +108,7 @@ public class LoveApp {
                 .system(SYSTEM_PROMPT + "每次对话后都要生成恋爱结果，标题为{用户名}的恋爱报告，内容为建议列表")
                 .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                .advisors(new MyLoggerAdvisor())
                 .call()
                 .entity(LoveReport.class);
 
@@ -108,6 +116,9 @@ public class LoveApp {
     }
 
     public String doChatWithRag(String message, String chatId) {
+        //查询重写
+        //String rewrite = queryRewriter.doQueryRewrite(message);
+
         ChatResponse chatResponse = chatClient
                 .prompt()
                 .user(message)
@@ -115,7 +126,8 @@ public class LoveApp {
                 .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
                 .advisors(new MyLoggerAdvisor())
-                .advisors(loveAppRagCloudAdvisor)
+                //.advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                .advisors(LoveAppRagCustomAdvisorFactory.createLoveAppRagCustomAdvisor(loveAppVectorStore, "单身"))
                 .call()
                 .chatResponse();
 

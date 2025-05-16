@@ -7,6 +7,8 @@ target/
 ### CUSTOM ###
 application-local.yml
 chatmemory
+!**/src/main/**/chatmemory
+sql
 
 ### STS ###
 .apt_generated

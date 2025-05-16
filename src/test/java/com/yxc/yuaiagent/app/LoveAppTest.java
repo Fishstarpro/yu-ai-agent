@@ -77,4 +77,13 @@ class LoveAppTest {
         String answer =  loveApp.doChatWithRag(message, chatId);
         Assertions.assertNotNull(answer);
     }
+
+    @Test
+    void doChatWithReport() {
+        String message = "你好,我是fishstar,我想让我的另一半bb更爱我,但我不知道怎么做";
+
+        LoveApp.LoveReport loveReport = loveApp.doChatWithReport(message, UUID.randomUUID().toString());
+
+        Assertions.assertNotNull(loveReport);
+    }
 }

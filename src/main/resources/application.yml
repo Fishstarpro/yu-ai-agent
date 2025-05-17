@@ -30,4 +30,4 @@ knife4j:
 #日志输出级别
 logging:
   level:
-    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: debug
+    org.springframework.ai: debug

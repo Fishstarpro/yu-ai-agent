@@ -1,14 +1,13 @@
 package com.yxc.yuaiagent.rag;
 
 import jakarta.annotation.Resource;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.rag.Query;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * ClassName: MyMultiQueryExpanderTest
@@ -29,6 +28,6 @@ class MyMultiQueryExpanderTest {
     void expand() {
         List<Query> queryList = myMultiQueryExpander.expand("谁是马云啊啊啊啊,哈哈哈");
 
-        Assertions.assertNotNull(queryList);
+        assertNotNull(queryList);
     }
 }

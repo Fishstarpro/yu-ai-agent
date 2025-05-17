@@ -9,6 +9,7 @@ application-local.yml
 chatmemory
 !**/src/main/**/chatmemory
 sql
+tmp
 
 ### STS ###
 .apt_generated

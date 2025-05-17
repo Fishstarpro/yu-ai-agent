@@ -9,8 +9,10 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -42,6 +44,12 @@ public class LoveApp {
     @Resource
     private QueryRewriter QueryRewriter;
 
+    @Resource
+    private ChatMemory mysqlChatMemory;
+
+    @Resource
+    private ToolCallback[] allTools;
+
     private ChatClient chatClient;
 
     private static final String SYSTEM_PROMPT = "你是一个温暖专业的AI恋爱导师，用以下方式帮助用户：  \n" +
@@ -69,16 +77,16 @@ public class LoveApp {
     @Autowired
     private QueryRewriter queryRewriter;
 
-    public LoveApp(ChatModel dashscopeChatModel, ChatMemory mysqlChatMemory) {
+    public LoveApp(ChatModel dashscopeChatModel) {
         //基于内存的对话存储
-        //ChatMemory chatMemory = new InMemoryChatMemory();
+        ChatMemory chatMemory = new InMemoryChatMemory();
         //基于文件的对话存储
         //ChatMemory chatMemory = new FileChatMemory(System.getProperty("user.dir") + "/chatmemory");
         //基于Mysql的对话存储
         chatClient = ChatClient.builder(dashscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
-                        new MessageChatMemoryAdvisor(mysqlChatMemory)
+                        new MessageChatMemoryAdvisor(chatMemory)
                 )
                 .build();
     }
@@ -135,4 +143,21 @@ public class LoveApp {
 
         return content;
     }
+
+    public String doChatWithTools(String message, String chatId) {
+        ChatResponse response = chatClient
+                .prompt()
+                .user(message)
+                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                // 开启日志，便于观察效果
+                .advisors(new MyLoggerAdvisor())
+                .tools(allTools)
+                .call()
+                .chatResponse();
+        String content = response.getResult().getOutput().getText();
+        log.info("content: {}", content);
+        return content;
+    }
+
 }

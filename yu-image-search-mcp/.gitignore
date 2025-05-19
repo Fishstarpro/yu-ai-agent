@@ -4,14 +4,6 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### CUSTOM ###
-application-local.yml
-chatmemory
-!**/src/main/**/chatmemory
-sql
-tmp
-mcp-servers.json
-
 ### STS ###
 .apt_generated
 .classpath

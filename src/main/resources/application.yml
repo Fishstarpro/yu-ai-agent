@@ -9,7 +9,7 @@ server:
     context-path: /api
 
 
-# springdoc-openapi
+#springdoc-openapi
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -22,7 +22,7 @@ springdoc:
       paths-to-match: '/**'
       packages-to-scan: com.yxc.yuaiagent.controller
 
-# knife4j
+#knife4j
 knife4j:
   enable: true
   setting:

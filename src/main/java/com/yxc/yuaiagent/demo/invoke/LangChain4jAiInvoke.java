@@ -14,8 +14,10 @@ import dev.langchain4j.community.model.dashscope.QwenChatModel;
 public class LangChain4jAiInvoke {
 
     public static void main(String[] args) {
+        TestApiKey testApiKey = new TestApiKey();
+
         QwenChatModel qwenChatModel = QwenChatModel.builder()
-                .apiKey(TestApiKey.apiKey)
+                .apiKey(testApiKey.apiKey)
                 .modelName("qwen-plus-latest")
                 .build();
 

@@ -16,5 +16,5 @@ import org.springframework.stereotype.Component;
 public class TestApiKey {
 
     @Value("${spring.ai.dashscope.api-key}")
-    public static String apiKey;
+    public String apiKey;
 }

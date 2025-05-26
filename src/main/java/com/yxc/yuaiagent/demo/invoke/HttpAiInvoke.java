@@ -2,15 +2,16 @@ package com.yxc.yuaiagent.demo.invoke;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 
 public class HttpAiInvoke {
 
     public static void main(String[] args) {
+        TestApiKey testApiKey = new TestApiKey();
+
         // 替换为你的实际 API Key
-        String apiKey = TestApiKey.apiKey; // 从环境变量中获取
+        String apiKey = testApiKey.apiKey; // 从环境变量中获取
         if (apiKey == null || apiKey.isEmpty()) {
             throw new IllegalArgumentException("DASHSCOPE_API_KEY 环境变量未设置");
         }

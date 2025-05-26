@@ -120,7 +120,7 @@ public class ToolCallAgent extends ReActAgent {
         ToolExecutionResult toolExecutionResult = toolCallingManager.executeToolCalls(prompt, toolCallChatResponse);
         //3.记录工具调用结果到上下文中
         setMessages(toolExecutionResult.conversationHistory());
-        //4.返回工具调用结果
+        //4.返回工具调用结果0
         ToolResponseMessage toolResponseMessage = (ToolResponseMessage) CollUtil.getLast(toolExecutionResult.conversationHistory());
 
         String result = toolResponseMessage.getResponses().stream()

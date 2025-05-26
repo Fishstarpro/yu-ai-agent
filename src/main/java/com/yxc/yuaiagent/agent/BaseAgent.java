@@ -7,9 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 /**
  * ClassName: BaseAgent
  * Package: com.yxc.yuaiagent.agent
@@ -97,6 +101,91 @@ public abstract class BaseAgent {
             //5.清理资源
             this.cleanUp();
         }
+    }
+
+    /**
+     * 执行代理的主要方法，处理代理的状态转换和执行流程(流式输出)。
+     * 子类必须实现step方法。
+     */
+    public SseEmitter runByStream(String userPrompt) {
+        SseEmitter sseEmitter = new SseEmitter(300000L);
+        //1.基础校验
+        try {
+            if (this.state != AgentState.IDLE) {
+                sseEmitter.send("Agent is not in IDLE state");
+
+                sseEmitter.complete();
+            }
+
+            if (userPrompt == null || userPrompt.isEmpty()) {
+                sseEmitter.send("User prompt cannot be null or empty");
+
+                sseEmitter.complete();
+            }
+        } catch (IOException e) {
+            sseEmitter.completeWithError(e);
+        }
+
+        CompletableFuture.runAsync(() -> {
+            //2.状态转换
+            this.state = AgentState.RUNNING;
+            //3.添加用户提示词到对话记忆中
+            this.messages.add(new UserMessage(userPrompt));
+            //4.执行step方法
+            try {
+                //记录每个步骤结果
+                List<String> result = new ArrayList<>();
+
+                for (int i = 0; i < maxSteps && state != AgentState.FINISHED; i++) {
+                    currentStep++;
+
+                    log.info("Step" + currentStep + " is excuting...");
+
+                    String stepResult = step();
+
+                    sseEmitter.send("Step" + currentStep + " result: " + stepResult);
+                }
+
+                if (currentStep >= maxSteps) {
+                    state = AgentState.FINISHED;
+
+                    sseEmitter.send("Agent reached the maximum number of" + maxSteps + " steps.");
+                }
+
+                sseEmitter.complete();
+            } catch (Exception e) {
+                state = AgentState.ERROR;
+
+                log.error("Error occurred during execution: " + e.getMessage());
+
+                try {
+                    sseEmitter.send("Error occurred during execution: " + e.getMessage());
+
+                    sseEmitter.complete();
+                } catch (IOException ex) {
+                    sseEmitter.completeWithError(e);
+                }
+            } finally {
+                //5.清理资源
+                this.cleanUp();
+            }
+        });
+        // 设置超时回调
+        sseEmitter.onTimeout(() -> {
+            this.state = AgentState.FINISHED;
+            this.cleanUp();
+            log.warn("SSE connection timeout");
+        });
+        // 设置完成回调
+        sseEmitter.onCompletion(() -> {
+            if (this.state == AgentState.RUNNING) {
+                this.state = AgentState.FINISHED;
+            }
+            this.cleanUp();
+            log.info("SSE connection completed");
+        });
+
+        return sseEmitter;
     }
 
     /**

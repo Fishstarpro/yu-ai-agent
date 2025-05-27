@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: yu-ai-agent-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: yu123456
+      MYSQL_DATABASE: yu_ai_agent
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/create.sql:/docker-entrypoint-initdb.d/create.sql
+    networks:
+      - yu-ai-network
+    restart: unless-stopped
+
+  backend:
+    build: .
+    container_name: yu-ai-agent-backend
+    ports:
+      - "8112:8112" 
+    depends_on:
+      - mysql
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/yu_ai_agent?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Yxc13731926265
+    networks:
+      - yu-ai-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8112/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./yu-ai-agent-frontend
+    container_name: yu-ai-agent-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - yu-ai-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  yu-ai-network:
+    driver: bridge 

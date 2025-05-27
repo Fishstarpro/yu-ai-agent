@@ -33,14 +33,14 @@ request.interceptors.response.use(
 
 // 创建SSE连接 - 恋爱大师应用
 export const createLoveAppSSE = (message, chatId) => {
-  const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8112/api'
+  const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8112'
   const url = `${baseUrl}/api/ai/love_app/chat/sse?message=${encodeURIComponent(message)}&chatId=${encodeURIComponent(chatId)}`
   return new EventSource(url)
 }
 
 // 创建SSE连接 - 智能体应用
 export const createManusAppSSE = (message) => {
-  const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8112/api'
+  const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8112'
   const url = `${baseUrl}/api/ai/manus/chat?message=${encodeURIComponent(message)}`
   return new EventSource(url)
 }
